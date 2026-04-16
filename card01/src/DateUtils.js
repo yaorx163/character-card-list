@@ -5,12 +5,12 @@ import { dateConfig as userDateConfig } from './DateConfig.js';
 
 const DEFAULT_CONFIG = {
 
-    月份季节映射: {
-        1: 'winter', 2: 'winter', 3: 'spring',
-        4: 'spring', 5: 'spring', 6: 'summer',
-        7: 'summer', 8: 'summer', 9: 'autumn',
-        10: 'autumn', 11: 'autumn', 12: 'winter'
-    },
+    季节划分规则: [
+        { name: "冬天", desc: "", start: [12, 1], end: [2, 31] }, // 31日会自动限制到当月的最后一天
+        { name: "春天", desc: "", start: [3, 1], end: [5, 31] },
+        { name: "夏天", desc: "", start: [6, 16], end: [8, 31] },
+        { name: "秋天", desc: "", start: [9, 11], end: [11, 31] },
+    ],
 
     月份天气分布配置: {
         1: [
@@ -115,9 +115,6 @@ const DEFAULT_CONFIG = {
     温度计算系数: {
         振幅限制: { 最小振幅: 2, 下限容差: 3, 上限容差: 2 },
         夜间振幅衰减: 0.7,
-        夏季:  { 夜间最低系数: 0.3, 曲线调整: 0 },
-        冬季:  { 夜间最高系数: 0.4, 曲线调整: -0.1 },
-        春秋季: { 夜间最低系数: 0.25, 夜间最高系数: 0.45, 曲线调整: 0 },
         雨雪天气: { 夜间升温: 2, 白天降温: -1 }
     },
 
@@ -126,7 +123,7 @@ const DEFAULT_CONFIG = {
 
     节假日规则配置: [],
 
-    星期名称配置: [
+    星期配置: [
         "星期日", "星期一", "星期二",
         "星期三", "星期四", "星期五", "星期六"
     ],
@@ -188,10 +185,6 @@ function simpleHash(str) {
     return h >>> 0;
 }
 
-function toDateKey(dateStr) {
-    return dateStr.substring(0, 10);
-}
-
 function toYear(dateStr) {
     return parseInt(dateStr.substring(0, 4), 10);
 }
@@ -239,39 +232,89 @@ function 获取小时温度系数(hour) {
  * @returns {object} { midnight: Date, dateKey: string, hour: number, year: number, month: number, day: number }
  */
 function normalizeDateInput(input) {
-    let date;
+    let year, month, day, hour = 0, minute = 0, second = 0, millisecond = 0, weekday;
+
     if (typeof input === 'string') {
-        date = new Date(input);
-        if (isNaN(date.getTime())) {
-            if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
-                date = new Date(input + 'T00:00:00Z');
-            } else {
-                throw new Error(`Invalid date string: ${input}`);
+        const datetimeMatch = input.match(
+            /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?)?/
+        );
+        if (!datetimeMatch) {
+            throw new Error(`Invalid date string: ${input}`);
+        }
+        year = parseInt(datetimeMatch[1], 10);
+        month = parseInt(datetimeMatch[2], 10);
+        day = parseInt(datetimeMatch[3], 10);
+        if (datetimeMatch[4] !== undefined) {
+            hour = parseInt(datetimeMatch[4], 10);
+            minute = parseInt(datetimeMatch[5] || '0', 10);
+            second = parseInt(datetimeMatch[6] || '0', 10);
+            if (datetimeMatch[7]) {
+                let msStr = datetimeMatch[7].padEnd(3, '0').slice(0, 3);
+                millisecond = parseInt(msStr, 10);
             }
         }
-    } else if (input instanceof Date) {
-        date = new Date(input.getTime());
-    } else {
-        throw new Error('Input must be a string or Date object');
+    } 
+    else if (input instanceof Date) {
+        year = input.getFullYear();
+        month = input.getMonth() + 1;
+        day = input.getDate();
+        hour = input.getHours();
+        minute = input.getMinutes();
+        second = input.getSeconds();
+        millisecond = input.getMilliseconds();
+    } 
+    else if (typeof input === 'object' && input !== null && 'year' in input && 'month' in input && 'day' in input) {
+        year = input.year;
+        month = input.month;
+        day = input.day;
+        hour = input.hour ?? 0;
+        minute = input.minute ?? 0;
+        second = input.second ?? 0;
+        millisecond = input.millisecond ?? 0;
+    } 
+    else {
+        throw new Error('Input must be a string, Date object, or { year, month, day } object');
     }
 
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth();
-    const day = date.getUTCDate();
-    const hour = date.getUTCHours();
+    // ==========================================
+    // 新增：月份不变的前提下，将日期归到合理范围
+    // ==========================================
+    // 1. 保证月份在 1-12 之间（防止传入 13月 导致月份也进位）
+    month = Math.max(1, Math.min(month, 12));
+    
+    // 2. 计算该年该月的实际最大天数（巧妙利用 JS Date 第0天即上个月最后一天的特效）
+    // 注意：这里传入的是 month，因为 JS 月份从0开始，所以 month 就是下个月的0天，即当月最后一天
+    const maxDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    
+    // 3. 将 day 限制在 1 到 maxDay 之间
+    // 这样 2月30日 -> 2月29日(闰年)或2月28日，4月31日 -> 4月30日
+    day = Math.max(1, Math.min(day, maxDay));
+    // ==========================================
 
-    const midnight = new Date(Date.UTC(year, month, day));
-    const dateKey = formatDateKey(midnight);
+    // 构造日期零点（UTC），此时 day 已经是安全值，不会再触发自动进位
+    const midnight = new Date(Date.UTC(year, month - 1, day));
+    const dateKey = formatDateKey(midnight); // 假设 formatDateKey 返回 'YYYY-MM-DD'
+    
+    // 统一使用 midnight 计算星期，避免重复 new Date
+    weekday = midnight.getUTCDay();
 
     return {
-        midnight,
-        dateKey,
-        hour,
+        midnight,      // Date 对象（UTC 零点）
+        dateKey,       // 字符串，如 '2026-04-16'
         year,
-        month: month + 1,
-        day
+        month,         // 1-12
+        day,           // 归后的合法日期 1-maxDay
+        hour,          // 0-23
+        minute,        // 0-59
+        second,        // 0-59
+        millisecond,   // 0-999
+        weekday        // 0=周日, 1=周一, ..., 6=周六
     };
 }
+
+export { normalizeDateInput };
+
+export { normalizeDateInput };
 
 // ================= 天气事件系统（支持类型与优先级） =================
 
@@ -426,11 +469,12 @@ function 解析事件详情(activeEvent) {
         remainingDays -= 阶段天数;
     }
     return { 
-        type: event.type, 
-        phase: currentPhase, 
-        dayIndex: dayIndex + 1, 
-        totalDays: event.duration,
-        类型: event.类型,
+        name: event.type, 
+        阶段: currentPhase, 
+        当前天数: dayIndex + 1, 
+        持续天数: event.duration,
+        desc: event.描述,
+        标签: event.类型,
         优先级: event.优先级
     };
 }
@@ -439,7 +483,6 @@ function 解析事件详情(activeEvent) {
 
 function 计算温度(dateKey, hour, weather, activeEvents, config) {
     const month = parseInt(dateKey.substring(5, 7), 10);
-    const season = config.月份季节映射[month];
     const range = config.月度温度范围配置[month];
     // 防御：如果当月范围缺失，使用默认范围（0-20）
     const safeRange = range || { min: 0, max: 20 };
@@ -470,47 +513,37 @@ function 计算温度(dateKey, hour, weather, activeEvents, config) {
     const tempSeed = (hashValue % 100) / 100;
     const dailyBaseTemp = effectiveMin + tempSeed * (effectiveMax - effectiveMin);
 
-    let hourlyMultiplier = 获取小时温度系数(hour);
-    let curveAdjustment = 0;
+    // 直接获取当日小时的基础温度系数，不再受季节修正
+    let hourlyMultiplier = 获取小时温度系数;
 
-    // 安全获取季节系数
-    const summerCoeff = 系数?.夏季 ?? { 夜间最低系数: 0.3, 曲线调整: 0.05 };
-    const winterCoeff = 系数?.冬季 ?? { 夜间最高系数: 0.6, 曲线调整: -0.05 };
-    const springAutumnCoeff = 系数?.春秋季 ?? { 夜间最低系数: 0.2, 夜间最高系数: 0.7, 曲线调整: 0 };
+    // 保留昼夜振幅衰减配置
     const nightAttenuation = 系数?.夜间振幅衰减 ?? 0.6;
+    // 保留雨雪天气日夜影响
     const rainSnow = 系数?.雨雪天气 ?? { 夜间升温: 1, 白天降温: -1 };
 
-    switch (season) {
-        case 'summer':
-            if (hour >= 22 || hour < 6) hourlyMultiplier = Math.max(summerCoeff.夜间最低系数, hourlyMultiplier);
-            curveAdjustment = summerCoeff.曲线调整;
-            break;
-        case 'winter':
-            if (hour >= 22 || hour < 6) hourlyMultiplier = Math.min(winterCoeff.夜间最高系数, hourlyMultiplier);
-            curveAdjustment = winterCoeff.曲线调整;
-            break;
-        case 'spring':
-        case 'autumn':
-            if (hour >= 22 || hour < 6) hourlyMultiplier = clamp(hourlyMultiplier, springAutumnCoeff.夜间最低系数, springAutumnCoeff.夜间最高系数);
-            curveAdjustment = springAutumnCoeff.曲线调整;
-            break;
+    let temperature = dailyBaseTemp;
+    
+    // 昼夜温差计算：白天正常振幅，夜晚振幅衰减
+    if (hour >= 6 && hour <= 18) {
+        temperature += (hourlyMultiplier - 0.5) * amplitude;
+    } else {
+        temperature += (hourlyMultiplier - 0.5) * amplitude * nightAttenuation;
     }
 
-    let temperature = dailyBaseTemp;
-    if (hour >= 6 && hour <= 18) temperature += (hourlyMultiplier - 0.5) * amplitude;
-    else temperature += (hourlyMultiplier - 0.5) * amplitude * nightAttenuation;
-    temperature += curveAdjustment * amplitude;
-
+    // 雨雪天气特殊计算
     if (weather.includes('雨') || weather.includes('雪')) {
         if (hour >= 18 || hour < 6) temperature += rainSnow.夜间升温;
         else temperature += rainSnow.白天降温;
     }
 
+    // 最终温度限制
     const lowerTolerance = 系数?.振幅限制?.下限容差 ?? 3;
     const upperTolerance = 系数?.振幅限制?.上限容差 ?? 3;
     temperature = clamp(temperature, effectiveMin - lowerTolerance, effectiveMax + upperTolerance);
+    
     return Math.round(temperature);
 }
+
 
 // ================= 公开接口（全部接受字符串或 Date 对象，并自动规范化配置） =================
 
@@ -522,18 +555,26 @@ function 计算温度(dateKey, hour, weather, activeEvents, config) {
  */
 export function 获取星期(dateInput, config = userDateConfig) {
     const normalizedConfig = normalizeConfig(config);
-    const { midnight } = normalizeDateInput(dateInput);
-    const weekNames = normalizedConfig.星期名称配置 || ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-    return weekNames[midnight.getUTCDay()];
+    const { weekday } = normalizeDateInput(dateInput);
+    const weekNames = normalizedConfig.星期配置 || [
+        { "name": "星期日", "desc": "日" },
+        { "name": "星期一", "desc": "月" },
+        { "name": "星期二", "desc": "火" },
+        { "name": "星期三", "desc": "水" },
+        { "name": "星期四", "desc": "木" },
+        { "name": "星期五", "desc": "金" },
+        { "name": "星期六", "desc": "土" }
+      ];
+    return weekNames[weekday];
 }
 
 /**
- * 获取下一个节假日
+ * 获取节日
  * @param {string|Date} dateInput 
  * @param {object} config 
- * @returns {string} 描述字符串
+ * @returns {object} { name: string, daysUntil: number }
  */
-export function 获取下一个节假日(dateInput, config = userDateConfig) {
+export function 获取节日(dateInput, config = userDateConfig) {
     const normalizedConfig = normalizeConfig(config);
     const { midnight, year } = normalizeDateInput(dateInput);
     const todayStart = midnight.getTime();
@@ -546,10 +587,10 @@ export function 获取下一个节假日(dateInput, config = userDateConfig) {
     for (const holiday of holidays) {
         if (holiday.date.getTime() >= todayStart) {
             const daysUntil = Math.round((holiday.date.getTime() - todayStart) / 86400000);
-            return `${holiday.name}(${daysUntil}天后)`;
+            return { name: holiday.name, daysUntil };
         }
     }
-    return "未知";
+    return { name: "未知", daysUntil: -1 };
 }
 
 /**
@@ -560,9 +601,37 @@ export function 获取下一个节假日(dateInput, config = userDateConfig) {
  */
 export function 获取季节(dateInput, config = userDateConfig) {
     const normalizedConfig = normalizeConfig(config);
-    const { month } = normalizeDateInput(dateInput);
-    return normalizedConfig.月份季节映射[month] || "unknown";
+    const { midnight, year } = normalizeDateInput(dateInput);
+    const unknownSeason = { name: "未知季节", desc: "" };
+    
+    if (!normalizedConfig.季节划分规则) return unknownSeason;
+
+    for (const season of normalizedConfig.季节划分规则) {
+        const [startMonth, startDay] = season.start;
+        const [endMonth, endDay] = season.end;
+
+        // 将配置转换为当前年份的 Date 对象
+        const startDate = new Date(Date.UTC(year, startMonth - 1, startDay));
+        const endDate = new Date(Date.UTC(year, endMonth - 1, endDay));
+
+        // JS Date 对象可以直接用 > < >= <= 比较，底层比较的是时间戳
+        if (startDate > endDate) {
+            // 结束日期比开始日期早，说明是跨年季节 (如 12月20日 -> 1月10日)
+            // 此时输入日期只要 >= 开始(年末) 或者 <= 结束(年初) 即在季节内
+            if (midnight >= startDate || midnight <= endDate) {
+                return { name: season.name, desc: season.desc };
+            }
+        } else {
+            // 正常季节 (不跨年)
+            if (midnight >= startDate && midnight <= endDate) {
+                return { name: season.name, desc: season.desc };
+            }
+        }
+    }
+
+    return unknownSeason;
 }
+  
 
 /**
  * 获取当日天气类型
@@ -605,13 +674,9 @@ export function 获取当日事件(dateInput, config = userDateConfig) {
     if (!activeEvents) return null;
 
     const sorted = [...activeEvents].sort((a, b) => (b.event.优先级 ?? 0) - (a.event.优先级 ?? 0));
-    const primaryDetail = 解析事件详情(sorted[0]);
     const allDetails = sorted.map(e => 解析事件详情(e));
     
-    return {
-        primary: primaryDetail,
-        all: allDetails
-    };
+    return allDetails;
 }
 
 /**
