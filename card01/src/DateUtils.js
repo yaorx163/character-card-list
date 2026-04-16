@@ -551,7 +551,7 @@ function 计算温度(dateKey, hour, weather, activeEvents, config) {
  * 获取星期名称
  * @param {string|Date} dateInput 
  * @param {object} config 
- * @returns {string} 星期名称
+ * @returns {object} { name: string, desc: string }
  */
 export function 获取星期(dateInput, config = userDateConfig) {
     const normalizedConfig = normalizeConfig(config);
@@ -572,7 +572,7 @@ export function 获取星期(dateInput, config = userDateConfig) {
  * 获取节日
  * @param {string|Date} dateInput 
  * @param {object} config 
- * @returns {object} { name: string, daysUntil: number }
+ * @returns {object} { name: string, desc: string, daysUntil: number }
  */
 export function 获取节日(dateInput, config = userDateConfig) {
     const normalizedConfig = normalizeConfig(config);
@@ -587,17 +587,17 @@ export function 获取节日(dateInput, config = userDateConfig) {
     for (const holiday of holidays) {
         if (holiday.date.getTime() >= todayStart) {
             const daysUntil = Math.round((holiday.date.getTime() - todayStart) / 86400000);
-            return { name: holiday.name, daysUntil };
+            return { name: holiday.name, desc: holiday.desc, daysUntil };
         }
     }
-    return { name: "未知", daysUntil: -1 };
+    return { name: "未知", desc: "", daysUntil: -1 };
 }
 
 /**
  * 获取季节名称
  * @param {string|Date} dateInput 
  * @param {object} config 
- * @returns {string} 季节
+ * @returns {object} { name: string, desc: string }
  */
 export function 获取季节(dateInput, config = userDateConfig) {
     const normalizedConfig = normalizeConfig(config);
