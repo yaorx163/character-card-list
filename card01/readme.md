@@ -1,0 +1,8 @@
+获取星期(dateInput, config = userDateConfig)
+获取节日(dateInput, config = userDateConfig)
+获取季节(dateInput, config = userDateConfig)
+获取天气(dateInput, config = userDateConfig)
+获取温度(dateInput, config = userDateConfig)
+获取当日事件(dateInput, config = userDateConfig)
+获取指定类型事件(dateInput, type, config = userDateConfig)
+获取天气预报(dateInput, days, config = userDateConfig)
