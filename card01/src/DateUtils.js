@@ -86,7 +86,7 @@ const DEFAULT_CONFIG = {
         11: { min: 8,  max: 17 },   12: { min: 2,  max: 12 },
     },
 
-    天气温度调整配置: {
+    天气配置: {
         '晴朗':   { minAdj: 2,  maxAdj: 5,   amplitudeAdj: 1.5 },
         '多云':   { minAdj: 0,  maxAdj: 0,   amplitudeAdj: 1.0 },
         '阴天':   { minAdj: -1, maxAdj: -2,  amplitudeAdj: 0.5 },
@@ -121,7 +121,7 @@ const DEFAULT_CONFIG = {
     // ═══ 统一格式的事件配置 ═══
     天气事件配置: {},
 
-    节假日规则配置: [],
+    节日配置: [],
 
     星期配置: [
         "星期日", "星期一", "星期二",
@@ -210,8 +210,8 @@ function getNthMonday(year, month, n) {
 }
 
 function getSimpleHolidays(year, config) {
-    // config 已经经过 normalizeConfig，肯定有 节假日规则配置
-    const holidayRules = config.节假日规则配置 || [];
+    // config 已经经过 normalizeConfig，肯定有 节日配置
+    const holidayRules = config.节日配置 || [];
     return holidayRules.map(规则 => {
         let day = 规则.day;
         if (规则.类型 === '第n个星期一') day = getNthMonday(year, 规则.month, 规则.n);
@@ -486,7 +486,7 @@ function 计算温度(dateKey, hour, weather, activeEvents, config) {
     const range = config.月度温度范围配置[month];
     // 防御：如果当月范围缺失，使用默认范围（0-20）
     const safeRange = range || { min: 0, max: 20 };
-    const weatherAdj = config.天气温度调整配置[weather] || config.天气温度调整配置['default'] || { minAdj: 0, maxAdj: 0, amplitudeAdj: 1.0 };
+    const weatherAdj = config.天气配置[weather] || config.天气配置['default'] || { minAdj: 0, maxAdj: 0, amplitudeAdj: 1.0 };
 
     let totalEventMinAdj = 0;
     let totalEventMaxAdj = 0;
@@ -643,8 +643,13 @@ export function 获取天气(dateInput, config = userDateConfig) {
     const normalizedConfig = normalizeConfig(config);
     const { dateKey, month } = normalizeDateInput(dateInput);
     const activeEvents = 查找当日事件(dateKey, normalizedConfig);
-    if (activeEvents) return 从事件取天气(activeEvents);
-    return 从分布取天气(dateKey, month, normalizedConfig);
+    let name = "未知";
+    if (activeEvents) name = 从事件取天气(activeEvents);
+    else name = 从分布取天气(dateKey, month, normalizedConfig);
+    return {
+        name,
+        desc: normalizedConfig.天气配置[name]?.desc ?? ''
+    }
 }
 
 /**

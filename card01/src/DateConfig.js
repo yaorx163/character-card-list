@@ -2,7 +2,7 @@
 export const dateConfig = {
 
     季节划分规则: [
-        { name: "冬天", desc: "", start: [12, 1], end: [2, 31] }, // 31日会自动限制到当月的最后一天
+        { name: "冬天", desc: "", start: [12, 1], end: [2, 31] }, // 跨年已经自动处理，31日会自动限制到当月的最后一天
         { name: "春天", desc: "", start: [3, 1], end: [5, 31] },
         { name: "夏天", desc: "", start: [6, 16], end: [8, 31] },
         { name: "秋天", desc: "", start: [9, 11], end: [11, 31] },
@@ -83,30 +83,30 @@ export const dateConfig = {
         11: { min: 8,  max: 17 },   12: { min: 2,  max: 12 },
     },
 
-    天气温度调整配置: {
-        '晴朗':   { minAdj: 2,  maxAdj: 5,   amplitudeAdj: 1.5 },
-        '多云':   { minAdj: 0,  maxAdj: 0,   amplitudeAdj: 1.0 },
-        '阴天':   { minAdj: -1, maxAdj: -2,  amplitudeAdj: 0.5 },
-        '小雨':   { minAdj: -1, maxAdj: -3,  amplitudeAdj: 0.3 },
-        '中雨':   { minAdj: -2, maxAdj: -4,  amplitudeAdj: 0.2 },
-        '大雨':   { minAdj: -2, maxAdj: -5,  amplitudeAdj: 0.1 },
-        '暴雨':   { minAdj: -2, maxAdj: -4,  amplitudeAdj: 0.1 },
-        '大暴雨': { minAdj: -3, maxAdj: -6,  amplitudeAdj: 0.1 },
-        '雷阵雨': { minAdj: -1, maxAdj: -3,  amplitudeAdj: 0.4 },
-        '小雪':   { minAdj: -3, maxAdj: -8,  amplitudeAdj: 0.8 },
-        '中雪':   { minAdj: -5, maxAdj: -10, amplitudeAdj: 0.5 },
-        '大雪':   { minAdj: -8, maxAdj: -15, amplitudeAdj: 0.3 },
-        '雨夹雪': { minAdj: -4, maxAdj: -7,  amplitudeAdj: 0.4 },
-        '冻雨':   { minAdj: -5, maxAdj: -9,  amplitudeAdj: 0.2 },
-        '雾':     { minAdj: -1, maxAdj: -1,  amplitudeAdj: 0.2 },
-        '大雾':   { minAdj: -1, maxAdj: -1,  amplitudeAdj: 0.1 },
-        '雾凇':   { minAdj: -8, maxAdj: -3,  amplitudeAdj: 1.1 },
-        '大风':   { minAdj: -3, maxAdj: -5,  amplitudeAdj: 0.9 },
-        '沙尘':   { minAdj: -2, maxAdj: -6,  amplitudeAdj: 0.4 },
-        '浮尘':   { minAdj: -1, maxAdj: -3,  amplitudeAdj: 0.7 },
-        '桑拿天': { minAdj: 3,  maxAdj: 2,   amplitudeAdj: 0.2 },
-        '台风':   { minAdj: -3, maxAdj: -8,  amplitudeAdj: 0.1 },
-        'default': { minAdj: 0, maxAdj: 0,   amplitudeAdj: 1.0 }
+    天气配置: {
+        '晴朗':   { "desc": "", minAdj: 2,  maxAdj: 5,   amplitudeAdj: 1.5 },
+        '多云':   { "desc": "", minAdj: 0,  maxAdj: 0,   amplitudeAdj: 1.0 },
+        '阴天':   { "desc": "", minAdj: -1, maxAdj: -2,  amplitudeAdj: 0.5 },
+        '小雨':   { "desc": "", minAdj: -1, maxAdj: -3,  amplitudeAdj: 0.3 },
+        '中雨':   { "desc": "", minAdj: -2, maxAdj: -4,  amplitudeAdj: 0.2 },
+        '大雨':   { "desc": "", minAdj: -2, maxAdj: -5,  amplitudeAdj: 0.1 },
+        '暴雨':   { "desc": "", minAdj: -2, maxAdj: -4,  amplitudeAdj: 0.1 },
+        '大暴雨': { "desc": "", minAdj: -3, maxAdj: -6,  amplitudeAdj: 0.1 },
+        '雷阵雨': { "desc": "", minAdj: -1, maxAdj: -3,  amplitudeAdj: 0.4 },
+        '小雪':   { "desc": "", minAdj: -3, maxAdj: -8,  amplitudeAdj: 0.8 },
+        '中雪':   { "desc": "", minAdj: -5, maxAdj: -10, amplitudeAdj: 0.5 },
+        '大雪':   { "desc": "", minAdj: -8, maxAdj: -15, amplitudeAdj: 0.3 },
+        '雨夹雪': { "desc": "", minAdj: -4, maxAdj: -7,  amplitudeAdj: 0.4 },
+        '冻雨':   { "desc": "", minAdj: -5, maxAdj: -9,  amplitudeAdj: 0.2 },
+        '雾':     { "desc": "", minAdj: -1, maxAdj: -1,  amplitudeAdj: 0.2 },
+        '大雾':   { "desc": "", minAdj: -1, maxAdj: -1,  amplitudeAdj: 0.1 },
+        '雾凇':   { "desc": "", minAdj: -8, maxAdj: -3,  amplitudeAdj: 1.1 },
+        '大风':   { "desc": "", minAdj: -3, maxAdj: -5,  amplitudeAdj: 0.9 },
+        '沙尘':   { "desc": "", minAdj: -2, maxAdj: -6,  amplitudeAdj: 0.4 },
+        '浮尘':   { "desc": "", minAdj: -1, maxAdj: -3,  amplitudeAdj: 0.7 },
+        '桑拿天': { "desc": "", minAdj: 3,  maxAdj: 2,   amplitudeAdj: 0.2 },
+        '台风':   { "desc": "", minAdj: -3, maxAdj: -8,  amplitudeAdj: 0.1 },
+        'default': { "desc": "", minAdj: 0, maxAdj: 0,   amplitudeAdj: 1.0 }
     },
 
     温度计算系数: {
@@ -215,23 +215,23 @@ export const dateConfig = {
         }
     },
 
-    节假日规则配置: [
-        { month: 1,  day: 1,  name: "元旦",         类型: "固定" },
-        { month: 1,  n: 2,   name: "成人节",        类型: "第n个星期一" },
-        { month: 2,  day: 11, name: "建国纪念日",    类型: "固定" },
-        { month: 3,  day: 21, name: "春分",          类型: "固定" },
-        { month: 4,  day: 29, name: "昭和日",        类型: "固定" },
-        { month: 5,  day: 3,  name: "宪法纪念日",    类型: "固定" },
-        { month: 5,  day: 4,  name: "绿之日",        类型: "固定" },
-        { month: 5,  day: 5,  name: "儿童节",        类型: "固定" },
-        { month: 7,  n: 3,   name: "海之日",         类型: "第n个星期一" },
-        { month: 8,  day: 11, name: "山之日",         类型: "固定" },
-        { month: 9,  n: 3,   name: "敬老节",         类型: "第n个星期一" },
-        { month: 9,  day: 23, name: "秋分",           类型: "固定" },
-        { month: 10, n: 2,   name: "体育节",         类型: "第n个星期一" },
-        { month: 11, day: 3,  name: "文化节",         类型: "固定" },
-        { month: 11, day: 23, name: "勤劳感谢日",     类型: "固定" },
-        { month: 12, day: 23, name: "天皇诞辰",       类型: "固定" }
+    节日配置: [
+        { month: 1,  day: 1,  name: "元旦", "desc": "",         类型: "固定" },
+        { month: 1,  n: 2,   name: "成人节", "desc": "",        类型: "第n个星期一" },
+        { month: 2,  day: 11, name: "建国纪念日", "desc": "",    类型: "固定" },
+        { month: 3,  day: 21, name: "春分", "desc": "",          类型: "固定" },
+        { month: 4,  day: 29, name: "昭和日", "desc": "",        类型: "固定" },
+        { month: 5,  day: 3,  name: "宪法纪念日", "desc": "",    类型: "固定" },
+        { month: 5,  day: 4,  name: "绿之日", "desc": "",        类型: "固定" },
+        { month: 5,  day: 5,  name: "儿童节", "desc": "",        类型: "固定" },
+        { month: 7,  n: 3,   name: "海之日", "desc": "",         类型: "第n个星期一" },
+        { month: 8,  day: 11, name: "山之日", "desc": "",         类型: "固定" },
+        { month: 9,  n: 3,   name: "敬老节", "desc": "",         类型: "第n个星期一" },
+        { month: 9,  day: 23, name: "秋分", "desc": "",           类型: "固定" },
+        { month: 10, n: 2,   name: "体育节", "desc": "",         类型: "第n个星期一" },
+        { month: 11, day: 3,  name: "文化节", "desc": "",         类型: "固定" },
+        { month: 11, day: 23, name: "勤劳感谢日", "desc": "",     类型: "固定" },
+        { month: 12, day: 23, name: "天皇诞辰", "desc": "",       类型: "固定" }
     ],
 
     星期配置: [
