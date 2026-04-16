@@ -648,17 +648,17 @@ export function 获取天气(dateInput, config = userDateConfig) {
 }
 
 /**
- * 获取指定时刻的温度（带 °C 后缀）
+ * 获取指定时刻的温度
  * @param {string|Date} dateInput - 必须包含时间信息（如 "2026-04-16T14:00:00" 或 Date 对象），若仅日期则小时为 0
  * @param {object} config 
- * @returns {string} 温度字符串，如 "22°C"
+ * @returns {number} 温度
  */
 export function 获取温度(dateInput, config = userDateConfig) {
     const normalizedConfig = normalizeConfig(config);
     const { dateKey, hour } = normalizeDateInput(dateInput);
     const weather = 获取天气(dateInput, normalizedConfig);
     const activeEvents = 查找当日事件(dateKey, normalizedConfig);
-    return 计算温度(dateKey, hour, weather, activeEvents, normalizedConfig) + '°C';
+    return 计算温度(dateKey, hour, weather, activeEvents, normalizedConfig);
 }
 
 /**
@@ -724,10 +724,10 @@ export function 获取天气预报(dateInput, days, config = userDateConfig) {
         
         const eventInfo = activeEvents ? 获取当日事件(dateKey, normalizedConfig) : null;
         result.push({ 
-            date: dateKey, 
+            date: normalizeDateInput(current),
             weather, 
-            tempMin: minTemp + '°C', 
-            tempMax: maxTemp + '°C', 
+            tempMin: minTemp, 
+            tempMax: maxTemp, 
             event: eventInfo 
         });
     }
