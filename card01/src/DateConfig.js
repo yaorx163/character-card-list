@@ -245,3 +245,6 @@ export const dateConfig = {
       ]
 };
 
+
+return dateConfig;
+

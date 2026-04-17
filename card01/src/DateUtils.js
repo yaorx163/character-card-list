@@ -738,3 +738,5 @@ export function 获取天气预报(dateInput, days, config = userDateConfig) {
     }
     return result;
 }
+
+return { 获取天气, 获取温度, 获取当日事件, 获取指定类型事件, 获取天气预报 };
